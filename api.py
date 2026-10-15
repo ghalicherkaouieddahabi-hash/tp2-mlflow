@@ -13,9 +13,9 @@ class Transaction(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     montant: float
-    heure: int
-    frequence: int
-    score: float
+    ancienne: float
+    freq_24h: float
+    nuit: int
 
 
 @app.get("/")
@@ -28,7 +28,12 @@ def predict(transaction: Transaction):
     try:
         model = mlflow.sklearn.load_model("models:/fraude@production")
 
-        donnees = pd.DataFrame([transaction.model_dump()])
+        colonnes = ["montant", "ancienne", "freq_24h", "nuit"]
+        donnees = pd.DataFrame(
+            [transaction.model_dump()],
+            columns=colonnes
+        )
+
         prediction = int(model.predict(donnees)[0])
 
         return {

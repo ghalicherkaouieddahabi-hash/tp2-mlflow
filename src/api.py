@@ -8,29 +8,31 @@ mlflow.set_tracking_uri("http://127.0.0.1:5000")
 
 app = FastAPI(title="API de détection de fraude")
 
+
 class Transaction(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     montant: float
-    heure: int
-    frequence: int
-    score: float
+    ancienne: float
+    freq_24h: float
+    nuit: int
+
 
 @app.get("/")
 def accueil():
     return {"message": "API de détection de fraude opérationnelle"}
+
 
 @app.post("/predict")
 def predict(transaction: Transaction):
     try:
         model = mlflow.sklearn.load_model("models:/fraude@production")
 
-        donnees = pd.DataFrame([{
-            "montant": transaction.montant,
-            "heure": transaction.heure,
-            "frequence": transaction.frequence,
-            "score": transaction.score,
-        }])
+        colonnes = ["montant", "ancienne", "freq_24h", "nuit"]
+        donnees = pd.DataFrame(
+            [transaction.model_dump()],
+            columns=colonnes
+        )
 
         prediction = int(model.predict(donnees)[0])
 
